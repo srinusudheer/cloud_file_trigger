@@ -24,7 +24,7 @@ def hello_http(request):
         file_info = data if isinstance(data, dict) else json.loads(data)
 
     else:
-        return make_response(jsonify({"error": "Invalid message format"}), 400)
+        return make_response(jsonify({"error": "Invalid message format, missing required fields"}), 400)
 
     # GCS info
 
