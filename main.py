@@ -13,18 +13,22 @@ db = firestore.Client()
 @functions_framework.http
 def hello_http(request):
     envelope = request.get_json()
-    if not envelope:
-        return "No Pub/Sub message received", 400
+    if envelope and "message" in envelope:
+        pubsub_message = envelope["message"]
+        data = base64.b64decode(pubsub_message["data"]).decode("utf-8").strip()
+        file_info = json.loads(data)
 
-    if not isinstance(envelope, dict) or "message" not in envelope:
-        return "Invalid Pub/Sub format", 400
+        # CASE 2: CloudEvents format
+    elif envelope and "data" in envelope:
+        data = envelope["data"]
+        file_info = data if isinstance(data, dict) else json.loads(data)
 
-    pubsub_message = envelope["message"]
-    data = base64.b64decode(pubsub_message["data"]).decode("utf-8").strip()
-    attrs = pubsub_message.get("attributes", {})
+    else:
+        return make_response(jsonify({"error": "Invalid message format"}), 400)
 
     # GCS info
-    file_info = json.loads(data)
+
+    #file_info = json.loads(data)
     bucket = file_info["bucket"]
     name = file_info["name"]
 
